@@ -8,7 +8,7 @@ DATABASE_NAME = 'trivia'
 username = 'skysign'
 password = 'fsndproject'
 url = '127.0.0.1:5432'
-database_path = "{}://{}:{}@{}/{}".format(
+database_URI = "{}://{}:{}@{}/{}".format(
     DATABASE, username, password, url, DATABASE_NAME)
 
 db = SQLAlchemy()
@@ -17,8 +17,9 @@ db = SQLAlchemy()
 setup_db(app)
     binds a flask application and a SQLAlchemy service
 '''
-def setup_db(app, database_path=database_path):
+def setup_db(app, database_path = database_URI):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
+    print(database_path)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     db.init_app(app)
