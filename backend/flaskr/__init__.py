@@ -16,17 +16,39 @@ def create_app(test_config=None):
   '''
   @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
   '''
+  CORS(app, resources={'/': {'origins': '*'}})
 
   '''
   @TODO: Use the after_request decorator to set Access-Control-Allow
   '''
+  @app.after_request
+  def after_request(response):
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,DELETE')
+    return response
 
   '''
   @TODO: 
   Create an endpoint to handle GET requests 
   for all available categories.
   '''
+  @app.route('/categories', methods=['GET'])
+  def get_categories():
+    # get all categories and add to dict
+    categories = Category.query.all()
+    dict = {}
+    for category in categories:
+      dict[category.id] = category.type
 
+    # abort 404 if no categories found
+    if (len(dict) == 0):
+      abort(404)
+
+    # return data to view
+    return jsonify({
+      'success': True,
+      'categories': dict
+    })
 
   '''
   @TODO: 
@@ -40,6 +62,31 @@ def create_app(test_config=None):
   ten questions per page and pagination at the bottom of the screen for three pages.
   Clicking on the page numbers should update the questions. 
   '''
+  @app.route('/questions', methods=['GET'])
+  def get_questions():
+    questions = Question.query.order_by(Question.id).all()
+    cntQuestions = len(questions)
+
+    page  = request.args.get('page', 1, type=int)
+    begin = (page -1) * QUESTIONS_PER_PAGE
+    end   = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
+
+    questionsInPage = questions[begin:end]
+
+    categories = Category.query.all()
+    dictCategories = {}
+    for category in categories:
+      dictCategories[category.id] = category.type
+
+    if (len(questionsInPage) == 0):
+      abort(404)
+
+    return jsonify({
+      'success': True,
+      'questions': questionsInPage,
+      'total_questions': cntQuestions,
+      'categories': dictCategories
+    })
 
   '''
   @TODO: 
@@ -48,6 +95,24 @@ def create_app(test_config=None):
   TEST: When you click the trash icon next to a question, the question will be removed.
   This removal will persist in the database and when you refresh the page. 
   '''
+  @app.route('/questions/<int:id>', methods=['DELETE'])
+  def delete_question(id):
+    try:
+      question = Question.query.filter_by(id=id).first()
+
+      if question is None:
+        abort(404)
+
+      question.delete()
+
+      # return success response
+      return jsonify({
+        'success': True,
+        'deleted': id
+      })
+
+    except:
+      abort(422)
 
   '''
   @TODO: 
@@ -59,6 +124,43 @@ def create_app(test_config=None):
   the form will clear and the question will appear at the end of the last page
   of the questions list in the "List" tab.  
   '''
+  @app.route('/questions', methods=['POST'])
+  def post_question():
+    jsonQuestion = request.get_json()
+
+    question    = jsonQuestion.get('question')
+    answer      = jsonQuestion.get('answer')
+    difficulty  = jsonQuestion.get('difficulty')
+    category    = jsonQuestion.get('category')
+
+    if ((new_question is None) or
+        (new_answer is None) or
+        (new_difficulty is None) or
+        (new_category is None)):
+      abort(422)
+
+    try:
+      newQuestion = Question(question=new_question, answer=new_answer, difficulty=new_difficulty, category=new_category)
+      newQuestion.insert()
+
+      questions = Question.query.order_by(Question.id).all()
+      cntQuestions = len(questions)
+      page = request.args.get('page', 1, type=int)
+      begin = (page - 1) * QUESTIONS_PER_PAGE
+      end = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
+
+      questionsInPage = questions[begin:end]
+
+      return jsonify({
+        'success': True,
+        'created': newQuestion.id,
+        'question_created': newQuestion.question,
+        'questions': questionsInPage,
+        'total_questions': cntQuestions
+      })
+
+    except:
+      abort(422)
 
   '''
   @TODO: 
@@ -79,7 +181,27 @@ def create_app(test_config=None):
   categories in the left column will cause only questions of that 
   category to be shown. 
   '''
+  @app.route('/categories/<int:id>/questions')
+  def get_questions_in_category(category_id):
+    category = Category.query.filter_by(id=category_id).first()
 
+    if (category is None):
+      abort(400)
+
+    questions = Question.query.filter_by(category=category.id).all()
+
+    cntQuestions = len(questions)
+    page = request.args.get('page', 1, type=int)
+    begin = (page - 1) * QUESTIONS_PER_PAGE
+    end = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
+    questionsInPage = questions[begin:end]
+
+    return jsonify({
+      'success': True,
+      'questions': questionsInPage,
+      'total_questions': cntQuestions,
+      'current_category': category.type
+    })
 
   '''
   @TODO: 
@@ -92,6 +214,45 @@ def create_app(test_config=None):
   one question at a time is displayed, the user is allowed to answer
   and shown whether they were correct or not. 
   '''
+  @app.route('/quizzes', methods=['POST'])
+  def get_quizzes():
+    json = request.get_json()
+    previous_questions = json.get('previous_questions')
+    category = json.get('quiz_category')
+
+    if ((category is None) or (previous is None)):
+      abort(400)
+
+    if (category['id'] == 0):
+      questions = Question.query.all()
+    else:
+      questions = Question.query.filter_by(category=category['id']).all()
+
+    random.shuffle(questions)
+
+    freshQuestion = None
+
+    for question in questions:
+      found = False
+      for previous_id in previous_questions:
+        if question.id == previous_id:
+          break
+        else:
+          freshQuestion = question
+          found = True
+
+      if found:
+        break
+
+    if freshQuestion is None:
+        return jsonify({
+            'success': False,
+        })
+
+    return  jsonify({
+              'success': True,
+              'question': freshQuestion.format()
+            })
 
   @app.errorhandler(404)
   def not_found(error):
