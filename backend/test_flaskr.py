@@ -42,13 +42,35 @@ class TriviaTestCase(unittest.TestCase):
     TODO
     Write at least one test for each test for successful operation and for expected errors.
     """
+    def test_get_categories(self):
+        response = self.client().get('/categories')
+        data = json.loads(response.data)
+
+        self.assertEqual(data['success'], True)
+
+    def test_get_questions(self):
+        response = self.client().get('/questions')
+        data = json.loads(response.data)
+
+        self.assertEqual(data['success'], True)
+
+    def test_get_questions(self):
+        response = self.client().get('/')
+
+    def test_post_question(self):
+        response = self.client().get('/')
+
+    def test_get_questions_in_category(self):
+        response = self.client().get('/')
+
+    def test_get_quizzes(self):
+        response = self.client().get('/')
+
     def test_404_request(self):
-        # send request with bad page data, load response
         response = self.client().get('/questions?page=100')
         data = json.loads(response.data)
 
-        # check status code and message
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(data.status_code, 404)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Not Found')
 
