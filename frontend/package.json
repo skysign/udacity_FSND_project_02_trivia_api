@@ -2,13 +2,15 @@
   "name": "trivia-app",
   "version": "0.1.0",
   "private": true,
-  "proxy": "http://192.168.0.1:9020/",
+  "proxy": "http://127.0.0.1:5000/",
   "dependencies": {
+    "bootstrap": "^3.4.1",
     "corsproxy": "^1.5.0",
-    "jquery": "^3.4.1",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "react-router-dom": "^5.0.0",
+    "jquery": "^3.6.0",
+    "node": "^16.4.0",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "3.0.1"
   },
   "scripts": {
@@ -31,5 +33,11 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "### Getting Setup",
+  "main": "index.js",
+  "devDependencies": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

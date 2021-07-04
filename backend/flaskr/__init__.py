@@ -1,4 +1,5 @@
 import os
+import sys
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -64,7 +65,8 @@ def create_app(test_config=None):
   '''
   @app.route('/questions', methods=['GET'])
   def get_questions():
-    questions = Question.query.order_by(Question.id).all()
+    questions = Question.query.order_by(Question.id.desc()).all()
+    questions = [q.format() for q in questions]
     cntQuestions = len(questions)
 
     page  = request.args.get('page', 1, type=int)
@@ -72,9 +74,9 @@ def create_app(test_config=None):
     end   = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
 
     questionsInPage = questions[begin:end]
-
     categories = Category.query.all()
     dictCategories = {}
+
     for category in categories:
       dictCategories[category.id] = category.type
 
@@ -105,15 +107,25 @@ def create_app(test_config=None):
 
       question.delete()
 
-      # return success response
-      return jsonify({
-        'success': True,
-        'deleted': id
-      })
-
     except:
       abort(422)
 
+    # return success response
+    return jsonify({
+            'success': True,
+            'deleted': question.id
+          })
+
+  '''
+  @TODO: 
+  Create a POST endpoint to get questions based on a search term. 
+  It should return any questions for whom the search term 
+  is a substring of the question. 
+
+  TEST: Search by any phrase. The questions list will update to include 
+  only question that include that string within their question. 
+  Try using the word "title" to start. 
+  '''
   '''
   @TODO: 
   Create an endpoint to POST a new question, 
@@ -128,10 +140,35 @@ def create_app(test_config=None):
   def post_question():
     jsonQuestion = request.get_json()
 
-    question    = jsonQuestion.get('question')
-    answer      = jsonQuestion.get('answer')
-    difficulty  = jsonQuestion.get('difficulty')
-    category    = jsonQuestion.get('category')
+    if (jsonQuestion.get('searchTerm')):
+      try:
+        search = jsonQuestion.get('searchTerm')
+        questions = Question.query.filter(
+          Question.question.ilike(f'%{search}%')).all()
+      except:
+        abort(422)
+
+      questions = [q.format() for q in questions]
+      cntQuestions = len(questions)
+
+      if (cntQuestions == 0):
+        abort(404)
+
+      page  = request.args.get('page', 1, type=int)
+      begin = (page -1) * QUESTIONS_PER_PAGE
+      end   = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
+      questionsInPage = questions[begin:end]
+
+      return jsonify({
+        'success': True,
+        'questions': questionsInPage,
+        'total_questions': len(questions)
+      })
+
+    new_question    = jsonQuestion.get('question')
+    new_answer      = jsonQuestion.get('answer')
+    new_difficulty  = jsonQuestion.get('difficulty')
+    new_category    = jsonQuestion.get('category')
 
     if ((new_question is None) or
         (new_answer is None) or
@@ -144,35 +181,19 @@ def create_app(test_config=None):
       newQuestion.insert()
 
       questions = Question.query.order_by(Question.id).all()
+      questionsInPage = [q.format() for q in questions]
       cntQuestions = len(questions)
-      page = request.args.get('page', 1, type=int)
-      begin = (page - 1) * QUESTIONS_PER_PAGE
-      end = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
 
-      questionsInPage = questions[begin:end]
+    except:
+      abort(422)
 
-      return jsonify({
+    return jsonify({
         'success': True,
         'created': newQuestion.id,
         'question_created': newQuestion.question,
         'questions': questionsInPage,
         'total_questions': cntQuestions
       })
-
-    except:
-      abort(422)
-
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions based on a search term. 
-  It should return any questions for whom the search term 
-  is a substring of the question. 
-
-  TEST: Search by any phrase. The questions list will update to include 
-  only question that include that string within their question. 
-  Try using the word "title" to start. 
-  '''
-
   '''
   @TODO: 
   Create a GET endpoint to get questions based on category. 
@@ -220,7 +241,8 @@ def create_app(test_config=None):
     previous_questions = json.get('previous_questions')
     category = json.get('quiz_category')
 
-    if ((category is None) or (previous is None)):
+    if ((category is None) or (previous_questions is None)):
+      print('here oh no #1')
       abort(400)
 
     if (category['id'] == 0):
@@ -277,7 +299,7 @@ def create_app(test_config=None):
       "error": 400,
       "message": "Bad Request"
     }), 400
-  
+
   return app
 
     
