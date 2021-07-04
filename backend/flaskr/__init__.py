@@ -229,6 +229,25 @@ def create_app(test_config=None):
       'current_category': category.type
     })
 
+  def check_params_quizzes(json):
+    if (json.get('previous_questions') is None):
+      return False
+
+    if (json.get('quiz_category') is None):
+      return False
+
+    if (json.get('quiz_category')['id'] is None):
+      return False
+
+    return True
+
+  def check_previous_questions(pre_question_ids, id):
+    for p_id in pre_question_ids:
+      if p_id == id:
+        return True
+
+    return False
+
   '''
   @TODO: 
   Create a POST endpoint to get questions to play the quiz. 
@@ -241,43 +260,38 @@ def create_app(test_config=None):
   and shown whether they were correct or not. 
   '''
   @app.route('/quizzes', methods=['POST'])
-  def get_quizzes():
+  def post_quizzes():
     json = request.get_json()
-    previous_questions = json.get('previous_questions')
     category = json.get('quiz_category')
+    pre_question_ids = json.get('previous_questions')
 
-    if ((category is None) or (previous_questions is None)):
-      abort(400)
+    if (False == check_params_quizzes(json)):
+      abort(422)
 
-    if (category['id'] == 0):
-      questions = Question.query.all()
-    else:
-      questions = Question.query.filter_by(category=category['id']).all()
+    try:
+      category = int(category['id'])
+      all_questions = Question.query.all() if (category == 0) \
+                                           else Question.query.filter_by(category=category).all()
+    except:
+      abort(422)
 
-    random.shuffle(questions)
-    freshQuestion = None
+    no_previous_questions = []
 
-    for question in questions:
-      found = False
-      for previous_id in previous_questions:
-        if question.id == previous_id:
-          break
-        else:
-          freshQuestion = question
-          print(question.format())
-          found = True
+    for question in all_questions:
+      if (check_previous_questions(pre_question_ids, question.id) == False):
+        no_previous_questions.append(question)
 
-      if found:
-        break
+    if (len(no_previous_questions) <= 0):
+      return jsonify({'success': False,})
 
-    if freshQuestion is None:
-        return jsonify({
-            'success': False,
-        })
+    random.shuffle(no_previous_questions)
+    new_question = no_previous_questions[0].format()
+
+    print(new_question)
 
     return  jsonify({
               'success': True,
-              'question': freshQuestion.format()
+              'question': new_question
             })
 
   @app.errorhandler(404)
