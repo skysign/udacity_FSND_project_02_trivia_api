@@ -4,9 +4,9 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 
 DATABASE = 'postgresql'
-DATABASE_NAME = 'trivia'
-username = 'skysign'
-password = 'fsndproject'
+DATABASE_NAME = 'user_fsnd'
+username = 'user_fsnd'
+password = 'fsndudacity2018'
 url = '127.0.0.1:5432'
 database_URI = "{}://{}:{}@{}/{}".format(
     DATABASE, username, password, url, DATABASE_NAME)
