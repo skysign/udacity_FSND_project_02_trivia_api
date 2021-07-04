@@ -203,13 +203,18 @@ def create_app(test_config=None):
   category to be shown. 
   '''
   @app.route('/categories/<int:id>/questions')
-  def get_questions_in_category(category_id):
-    category = Category.query.filter_by(id=category_id).first()
+  def get_questions_in_category(id):
+    try:
+      category = Category.query.filter_by(id=id).first()
 
-    if (category is None):
+      if (category is None):
+        abort(400)
+
+      questions = Question.query.filter_by(category=category.id).all()
+    except:
       abort(400)
 
-    questions = Question.query.filter_by(category=category.id).all()
+    questions = [q.format() for q in questions]
 
     cntQuestions = len(questions)
     page = request.args.get('page', 1, type=int)
@@ -242,7 +247,6 @@ def create_app(test_config=None):
     category = json.get('quiz_category')
 
     if ((category is None) or (previous_questions is None)):
-      print('here oh no #1')
       abort(400)
 
     if (category['id'] == 0):
@@ -251,7 +255,6 @@ def create_app(test_config=None):
       questions = Question.query.filter_by(category=category['id']).all()
 
     random.shuffle(questions)
-
     freshQuestion = None
 
     for question in questions:
@@ -261,6 +264,7 @@ def create_app(test_config=None):
           break
         else:
           freshQuestion = question
+          print(question.format())
           found = True
 
       if found:
