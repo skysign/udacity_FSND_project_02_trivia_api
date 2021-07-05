@@ -3,11 +3,11 @@ from sqlalchemy import Column, String, Integer, create_engine
 from flask_sqlalchemy import SQLAlchemy
 import json
 
-DATABASE = 'postgresql'
-DATABASE_NAME = 'user_fsnd'
-username = 'user_fsnd'
-password = 'fsndudacity2018'
-url = '127.0.0.1:5432'
+DATABASE = os.environ.get('DATABASE')
+DATABASE_NAME = os.environ.get('DATABASE_NAME')
+username = os.environ.get('DATABASE_USER')
+password = os.environ.get('DATABASE_PASSWORD')
+url = os.environ.get('DATABASE_HOSTPORT')
 database_URI = "{}://{}:{}@{}/{}".format(
     DATABASE, username, password, url, DATABASE_NAME)
 

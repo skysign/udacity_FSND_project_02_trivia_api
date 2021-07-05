@@ -2,7 +2,6 @@ import os
 import unittest
 import json
 from flask_sqlalchemy import SQLAlchemy
-
 from flaskr import create_app
 from models import setup_db, Question, Category
 
@@ -14,13 +13,12 @@ class TriviaTestCase(unittest.TestCase):
         """Define test variables and initialize app."""
         self.app = create_app()
         self.client = self.app.test_client
-        self.database_name = "user_fsnd"
 
-        DATABASE = 'postgresql'
-        DATABASE_NAME = self.database_name
-        username = 'user_fsnd'
-        password = 'fsndudacity2018'
-        url = '127.0.0.1:5432'
+        DATABASE = os.environ.get('DATABASE')
+        DATABASE_NAME = os.environ.get('DATABASE_NAME')
+        username = os.environ.get('DATABASE_USER')
+        password = os.environ.get('DATABASE_PASSWORD')
+        url = os.environ.get('DATABASE_HOSTPORT')
         database_URI = "{}://{}:{}@{}/{}".format(
             DATABASE, username, password, url, DATABASE_NAME)
 

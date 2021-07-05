@@ -72,28 +72,24 @@ def create_app(test_config=None):
 
     @app.route('/questions', methods=['GET'])
     def get_questions():
-        questions = Question.query.order_by(Question.id.desc()).all()
-        questions = [q.format() for q in questions]
-        cntQuestions = len(questions)
-
         page = request.args.get('page', 1, type=int)
-        begin = (page - 1) * QUESTIONS_PER_PAGE
-        end = min(begin + QUESTIONS_PER_PAGE, cntQuestions)
 
-        questionsInPage = questions[begin:end]
+        pagination = Question.query.order_by(Question.id.desc())\
+                        .paginate(page=page, per_page=QUESTIONS_PER_PAGE)
+        questions = [q.format() for q in pagination.items]
         categories = Category.query.all()
         dictCategories = {}
 
         for category in categories:
             dictCategories[category.id] = category.type
 
-        if (len(questionsInPage) == 0):
+        if (len(questions) == 0):
             abort(404)
 
         return jsonify({
             'success': True,
-            'questions': questionsInPage,
-            'total_questions': cntQuestions,
+            'questions': questions,
+            'total_questions': pagination.total,
             'categories': dictCategories
         })
 
@@ -117,6 +113,7 @@ def create_app(test_config=None):
             question.delete()
 
         except Exception as e:
+            print(e)
             abort(422)
 
         # return success response
@@ -156,6 +153,7 @@ def create_app(test_config=None):
                 questions = Question.query.filter(
                     Question.question.ilike(f'%{search}%')).all()
             except Exception as e:
+                print(e)
                 abort(422)
 
             questions = [q.format() for q in questions]
@@ -197,6 +195,7 @@ def create_app(test_config=None):
             cntQuestions = len(questions)
 
         except Exception as e:
+            print(e)
             abort(422)
 
         return jsonify({
@@ -226,6 +225,7 @@ def create_app(test_config=None):
 
             questions = Question.query.filter_by(category=category.id).all()
         except Exception as e:
+            print(e)
             abort(400)
 
         questions = [q.format() for q in questions]
@@ -288,6 +288,7 @@ def create_app(test_config=None):
             all_questions = Question.query.all() if (category == 0) \
                 else Question.query.filter_by(category=category).all()
         except Exception as e:
+            print(e)
             abort(422)
 
         no_previous_questions = []
@@ -297,7 +298,7 @@ def create_app(test_config=None):
                 no_previous_questions.append(question)
 
         if len(no_previous_questions) <= 0:
-            return jsonify({'success': False, })
+            return jsonify({'success': False})
 
         random.shuffle(no_previous_questions)
         new_question = no_previous_questions[0].format()
