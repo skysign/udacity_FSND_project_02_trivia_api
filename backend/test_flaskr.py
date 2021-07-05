@@ -40,14 +40,15 @@ class TriviaTestCase(unittest.TestCase):
             self.db.init_app(self.app)
             # create all tables
             self.db.create_all()
-    
+
     def tearDown(self):
         """Executed after reach test"""
         pass
 
     """
     TODO
-    Write at least one test for each test for successful operation and for expected errors.
+    Write at least one test for each test for successful operation
+    and for expected errors.
     """
     def test_get_questions(self):
         response = self.client().get('/questions')
@@ -66,7 +67,9 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertEqual(len(data['questions']), 1)
         self.assertEqual(data['questions'][0]['id'], 9)
-        self.assertEqual(data['questions'][0]['question'], 'What boxer\'s original name is Cassius Clay?')
+        self.assertEqual(
+            data['questions'][0]['question'],
+            'What boxer\'s original name is Cassius Clay?')
 
     def test_post_new_questions(self):
         response = self.client().post('/questions', json=self.new_question)
@@ -80,8 +83,11 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_delete_question(self):
         # To test 'delete', we insert a question to delete
-        question = Question(question=self.new_question['question'], answer=self.new_question['answer'],
-                            category=self.new_question['category'], difficulty=self.new_question['difficulty'])
+        question = Question(
+            question=self.new_question['question'],
+            answer=self.new_question['answer'],
+            category=self.new_question['category'],
+            difficulty=self.new_question['difficulty'])
         question.insert()
 
         response = self.client().delete('/questions/{}'.format(question.id))
@@ -103,7 +109,9 @@ class TriviaTestCase(unittest.TestCase):
     def test_play_quiz_game(self):
         response = self.client().post('/quizzes',
                                       json={'previous_questions': [2, 6],
-                                            'quiz_category': {'type': 'Entertainment', 'id': '5'}})
+                                            'quiz_category': {
+                                                'type': 'Entertainment',
+                                                'id': '5'}})
         data = json.loads(response.data)
 
         self.assertEqual(response.status_code, 200)
@@ -121,7 +129,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'Unprocessable Entity')
-
 
     def test_404_request(self):
         # send request with bad page data, load response
