@@ -74,8 +74,8 @@ def create_app(test_config=None):
     def get_questions():
         page = request.args.get('page', 1, type=int)
 
-        pagination = Question.query.order_by(Question.id.desc())\
-                        .paginate(page=page, per_page=QUESTIONS_PER_PAGE)
+        pagination = Question.query.order_by(Question.id.desc()).paginate(
+            page=page, per_page=QUESTIONS_PER_PAGE)
         questions = [q.format() for q in pagination.items]
         categories = Category.query.all()
         dictCategories = {}
